@@ -43,7 +43,7 @@ from libs.pascal_voc_io import PascalVocReader
 from libs.pascal_voc_io import XML_EXT
 from libs.yolo_io import YoloReader
 from libs.yolo_obb_io import YoloOBBReader
-from libs.yolo_io import TXT_EXT
+from libs.yolo_obb_io import JSON_EXT
 from libs.ustr import ustr
 from libs.version import __version__
 from libs.hashableQListWidgetItem import HashableQListWidgetItem
@@ -517,7 +517,7 @@ class MainWindow(QMainWindow, WindowMixin):
             self.usingPascalVocFormat = False
             self.usingYoloFormat = False
             self.usingYoloOBBFormat = True
-            LabelFile.suffix = TXT_EXT
+            LabelFile.suffix = JSON_EXT
             
         elif save_format == FORMAT_YOLO_OBB:'''
         
@@ -526,7 +526,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.usingPascalVocFormat = False
         self.usingYoloFormat = False
         self.usingYoloOBBFormat = True
-        LabelFile.suffix = TXT_EXT
+        LabelFile.suffix = JSON_EXT
 
     def change_format(self):
         if self.usingPascalVocFormat: self.set_format(FORMAT_YOLO)
@@ -871,14 +871,14 @@ class MainWindow(QMainWindow, WindowMixin):
                 self.labelFile.savePascalVocFormat(annotationFilePath, shapes, self.filePath, self.imageData,
                                                    self.lineColor.getRgb(), self.fillColor.getRgb())
             elif self.usingYoloFormat is True:
-                if annotationFilePath[-4:].lower() != ".txt":
-                    annotationFilePath += TXT_EXT
+                if annotationFilePath[-4:].lower() != ".json":
+                    annotationFilePath += JSON_EXT
                 self.labelFile.saveYoloFormat(annotationFilePath, shapes, self.filePath, self.imageData, self.labelHist,
                                                    self.lineColor.getRgb(), self.fillColor.getRgb())
             elif self.usingYoloOBBFormat is True:
                 shapes = [format_obb_shape(shape) for shape in self.canvas.shapes]
-                if annotationFilePath[-4:].lower() != ".txt":
-                    annotationFilePath += TXT_EXT
+                if annotationFilePath[-4:].lower() != ".json":
+                    annotationFilePath += JSON_EXT
                 self.labelFile.saveYoloOBBFormat(annotationFilePath, shapes, self.filePath, self.imageData, self.labelHist,
                                                    self.lineColor.getRgb(), self.fillColor.getRgb())
             else:
@@ -1101,32 +1101,22 @@ class MainWindow(QMainWindow, WindowMixin):
                 basename = os.path.basename(
                     os.path.splitext(self.filePath)[0])
                 xmlPath = os.path.join(self.defaultSaveDir, basename + XML_EXT)
-                txtPath = os.path.join(self.defaultSaveDir, basename + TXT_EXT)
+                jsonPath = os.path.join(self.defaultSaveDir, basename + JSON_EXT)
 
                 """Annotation file priority:
                 PascalXML > YOLO_OBB > YOLO
                 """
                 if os.path.isfile(xmlPath):
                     self.loadPascalXMLByFilename(xmlPath)
-                elif os.path.isfile(txtPath):
-                    with open(txtPath) as f:
-                        first_line = f.readline()
-                        if (first_line == "YOLO_OBB\n"):
-                            self.loadYOLOTOBBXTByFilename(txtPath)
-                        else:
-                            self.loadYOLOTXTByFilename(txtPath)
+                elif os.path.isfile(jsonPath):
+                    self.loadYOLOTOBBJSONByFilename(jsonPath)
             else:
                 xmlPath = os.path.splitext(filePath)[0] + XML_EXT
-                txtPath = os.path.splitext(filePath)[0] + TXT_EXT
+                jsonPath = os.path.splitext(filePath)[0] + JSON_EXT
                 if os.path.isfile(xmlPath):
                     self.loadPascalXMLByFilename(xmlPath)
-                elif os.path.isfile(txtPath):
-                    with open(txtPath) as f:
-                        first_line = f.readline()
-                        if (first_line == "YOLO_OBB\n"):
-                            self.loadYOLOTOBBXTByFilename(txtPath)
-                        else:
-                            self.loadYOLOTXTByFilename(txtPath)
+                elif os.path.isfile(jsonPath):
+                    self.loadYOLOTOBBJSONByFilename(jsonPath)
 
             self.setWindowTitle(__appname__ + ' ' + filePath)
 
@@ -1516,7 +1506,7 @@ class MainWindow(QMainWindow, WindowMixin):
         print (shapes)
         self.loadLabels(shapes)
         
-    def loadYOLOTOBBXTByFilename(self, txtPath):
+    def loadYOLOTOBBJSONByFilename(self, txtPath):
         if self.filePath is None:
             return
         if os.path.isfile(txtPath) is False:

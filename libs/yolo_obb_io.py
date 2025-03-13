@@ -7,8 +7,9 @@ from xml.etree.ElementTree import Element, SubElement
 from lxml import etree
 import codecs
 from libs.constants import DEFAULT_ENCODING
+import json
 
-TXT_EXT = '.txt'
+JSON_EXT = '.json'
 ENCODE_METHOD = DEFAULT_ENCODING
 
 class YOLOOBBWriter:
@@ -35,7 +36,7 @@ class YOLOOBBWriter:
 
         if targetFile is None:
             out_file = open(
-            self.filename + TXT_EXT, 'w', encoding=ENCODE_METHOD)
+            self.filename + JSON_EXT, 'w', encoding=ENCODE_METHOD)
             classesFile = os.path.join(os.path.dirname(os.path.abspath(self.filename)), "classes.txt")
             out_class_file = open(classesFile, 'w')
 
@@ -44,14 +45,24 @@ class YOLOOBBWriter:
             classesFile = os.path.join(os.path.dirname(os.path.abspath(targetFile)), "classes.txt")
             out_class_file = open(classesFile, 'w')
 
-        out_file.write("YOLO_OBB\n")
+        # out_file.write("YOLO_OBB\n")
+        json_data = []
+
         for box in self.boxlist:
             boxName = box['name']
             if boxName not in classList:
                 classList.append(boxName)
             classIndex = classList.index(boxName)
-            out_file.write("%d %.6f %.6f %.6f %.6f %.6f\n" % (classIndex, box['centre_x'], box['centre_y'], box['height'], box['width'], box['angle']))
 
+            json_data.append({
+                "Class": classIndex,
+                "X": box['centre_x'],
+                "Y": box['centre_y'],
+                "Width": box['height'],
+                "Height": box['width'],
+                "Angle": box['angle']
+            })
+        json.dump(json_data, out_file, indent=4)
         # print (classList)
         # print (out_class_file)
         for c in classList:
@@ -101,11 +112,14 @@ class YoloOBBReader:
         self.shapes.append((label, float(centre_x), float(centre_y), float(height), float(width), float(angle), None, None, difficult)) # The 2 None's are for shape colors
 
     def parseYoloOBBFormat(self):
-        bndBoxFile = open(self.filepath, 'r')
-        next(bndBoxFile) # Skip first line ("YOLO_OBB")
-        for bndBox in bndBoxFile:
-            classIndex, centre_x, centre_y, height, width, angle = bndBox.split(' ')
-            label = self.classes[int(classIndex)]
-
-            # Caveat: difficult flag is discarded when saved as yolo format.
-            self.addShape(label, centre_x, centre_y, height, width, angle, False)
+        with open(self.filepath, 'r') as f:
+            data = json.load(f)
+            for item in data:
+                classIndex = item["Class"]
+                centre_x = item["X"]
+                centre_y = item["Y"]
+                width = item["Height"]
+                height = item["Width"]
+                angle = item["Angle"]
+                label = self.classes[int(classIndex)]
+                self.addShape(label, centre_x, centre_y, height, width, angle, False)

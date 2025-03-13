@@ -9,7 +9,7 @@ except ImportError:
 from base64 import b64encode, b64decode
 from libs.pascal_voc_io import PascalVocWriter
 from libs.yolo_io import YOLOWriter
-from libs.yolo_obb_io import YOLOOBBWriter, TXT_EXT
+from libs.yolo_obb_io import YOLOOBBWriter, JSON_EXT
 import os.path
 import sys
 
@@ -21,7 +21,7 @@ class LabelFileError(Exception):
 class LabelFile(object):
     # It might be changed as window creates. By default, using TXT ext
     # suffix = '.lif'
-    suffix = TXT_EXT
+    suffix = JSON_EXT
 
     def __init__(self, filename=None):
         self.shapes = ()

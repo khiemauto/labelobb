@@ -17,11 +17,11 @@ except ImportError:
 from libs.lib import distance
 import sys
 
-DEFAULT_LINE_COLOR = QColor(0, 255, 0, 128)
-DEFAULT_FILL_COLOR = QColor(255, 0, 0, 128)
+DEFAULT_LINE_COLOR = QColor(0, 255, 0, 0)
+DEFAULT_FILL_COLOR = QColor(255, 0, 0, 0)
 DEFAULT_SELECT_LINE_COLOR = QColor(255, 255, 255)
-DEFAULT_SELECT_FILL_COLOR = QColor(0, 128, 255, 155)
-DEFAULT_VERTEX_FILL_COLOR = QColor(0, 255, 0, 255)
+DEFAULT_SELECT_FILL_COLOR = QColor(0, 128, 255, 0)
+DEFAULT_VERTEX_FILL_COLOR = QColor(0, 255, 0, 0)
 DEFAULT_HVERTEX_FILL_COLOR = QColor(255, 0, 0)
 DEFAULT_ORIGIN_FILL_COLOR = QColor(0, 0, 0)
 MIN_Y_LABEL = 10
@@ -136,7 +136,7 @@ class Shape(object):
                 min_y = min(min_y, point.y())
             if min_x != sys.maxsize and min_y != sys.maxsize:
                 font = QFont()
-                font.setPointSize(10)
+                font.setPointSize(3)
                 font.setBold(True)
                 painter.setFont(font)
                 if(self.label == None):
