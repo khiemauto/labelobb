@@ -58,9 +58,9 @@ class YOLOOBBWriter:
                 "Class": classIndex,
                 "X": box['centre_x'],
                 "Y": box['centre_y'],
-                "Width": box['height'],
-                "Height": box['width'],
-                "Angle": box['angle']
+                "Width": box['width'],
+                "Height": box['height'],
+                "Angle": -box['angle']
             })
         json.dump(json_data, out_file, indent=4)
         # print (classList)
@@ -118,8 +118,8 @@ class YoloOBBReader:
                 classIndex = item["Class"]
                 centre_x = item["X"]
                 centre_y = item["Y"]
-                width = item["Height"]
-                height = item["Width"]
-                angle = item["Angle"]
+                width = item["Width"]
+                height = item["Height"]
+                angle = -item["Angle"]
                 label = self.classes[int(classIndex)]
                 self.addShape(label, centre_x, centre_y, height, width, angle, False)

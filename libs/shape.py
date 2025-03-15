@@ -143,7 +143,7 @@ class Shape(object):
                     self.label = ""
                 if(min_y < MIN_Y_LABEL):
                     min_y += MIN_Y_LABEL
-                painter.drawText(int(min_x), int(min_y), "h={0:.1f}, w={1:.1f} , \u03F4={2:.1f}".format(self.height, self.width, self.angle))
+                painter.drawText(int(min_x), int(min_y), "H={0:.1f} W={1:.1f} A={2:.1f}".format(self.height, self.width, -self.angle))
 
             # Draw text at the top-left
             if self.paintLabel:
@@ -214,6 +214,12 @@ class Shape(object):
     def moveVertexBy(self, i, offset):
         self.points[i] = self.points[i] + offset
         self.updateOBBInfo()
+
+    def rotate_point(self, x, y, cx, cy, alpha):
+        x_new = cx + math.cos(alpha) * (x - cx) - math.sin(alpha) * (y - cy)
+        y_new = cy + math.sin(alpha) * (x - cx) + math.cos(alpha) * (y - cy)
+        
+        return x_new, y_new
         
     def rotateBy(self, angle, pixmap_width, pixmap_height): # Clock-wise
         new_xs = []
@@ -221,8 +227,9 @@ class Shape(object):
         for i in range(4):
             point_x = self.points[i].x()
             point_y = self.points[i].y()
-            new_xs.append(self.origin[0] + math.cos(angle) * (point_x - self.origin[0]) - math.sin(angle) * (point_y - self.origin[1]))
-            new_ys.append(self.origin[1] + math.sin(angle) * (point_x - self.origin[0]) + math.cos(angle) * (point_y - self.origin[1]))
+            new_x, new_y = self.rotate_point(point_x, point_y, self.origin[0], self.origin[1], angle)
+            new_xs.append(new_x)
+            new_ys.append(new_y)
         if all( (0 <= new_xs[i] <= pixmap_width and 0 <= new_ys[i] <= pixmap_height) for i in range(4) ):
             for j in range(4):
                 self.points[j].setX(new_xs[j])
@@ -232,48 +239,27 @@ class Shape(object):
     def updateOBBInfo(self):
         if (self.reachMaxPoints()):
             # Update Origin (Centre info)
-            minX = min([self.points[i].x() for i in range(4)])
-            maxX = max([self.points[i].x() for i in range(4)])
-            minY = min([self.points[i].y() for i in range(4)])
-            maxY = max([self.points[i].y() for i in range(4)])
-            self.origin[0] = minX + (maxX-minX)/2.0
-            self.origin[1] = minY + (maxY-minY)/2.0
+            self.origin[0] = sum([self.points[i].x() for i in range(4)]) / 4.0
+            self.origin[1] = sum([self.points[i].y() for i in range(4)]) / 4.0
+
+            self.angle = math.degrees( math.atan2( self.points[1].y()-self.points[0].y(),
+                                                   self.points[1].x()-self.points[0].x() ) )
             
-            val1 = math.sqrt( ((self.points[1].x()-self.points[0].x())**2) + 
+            self.width = math.sqrt( ((self.points[1].x()-self.points[0].x())**2) + 
                               ((self.points[1].y()-self.points[0].y())**2) )
-            val2 = math.sqrt( ((self.points[2].x()-self.points[1].x())**2) + 
+            self.height = math.sqrt( ((self.points[2].x()-self.points[1].x())**2) + 
                               ((self.points[2].y()-self.points[1].y())**2) )
-            self.height = max([val1, val2])
-            self.width = min([val1, val2])
-            if (np.argmax([val1, val2]) == 0): # Height is point[0] to point[1]
-                self.angle = math.degrees( math.atan2( math.fabs(self.points[0].y()-self.points[1].y()), 
-                                                       math.fabs(self.points[0].x()-self.points[1].x()) ) )
-                # Check if box is slanted like West-North to East-South
-                larger_x_point_id = np.argmax([self.points[0].x(), self.points[1].x()])
-                if (    self.points[larger_x_point_id].y()>self.points[1 if (larger_x_point_id==0) else 0].y()   ):
-                    self.angle = -self.angle
-            else: # Height is point[1] to point[2]
-                self.angle = math.degrees( math.atan2( math.fabs(self.points[1].y()-self.points[2].y()), 
-                                                       math.fabs(self.points[1].x()-self.points[2].x()) ) )
-                # Check if box is slanted like West-North to East-South
-                larger_x_point_id = np.argmax([self.points[1].x(), self.points[2].x()]) + 1
-                if (    self.points[larger_x_point_id].y()>self.points[2 if (larger_x_point_id==1) else 1].y()   ):
-                    self.angle = -self.angle
     
+
     def updatePointsFromOBBInfo(self, canvas_width, canvas_height):
-        p = []
-        p.append(self.origin[0] + self.height*math.cos(math.radians(self.angle))/2.0 + self.width*math.cos(math.radians(90+self.angle))/2.0)
-        p.append(self.origin[1] - self.height*math.sin(math.radians(self.angle))/2.0 - self.width*math.sin(math.radians(90+self.angle))/2.0)
-        
-        p.append(self.origin[0] - self.height*math.cos(math.radians(self.angle))/2.0 + self.width*math.cos(math.radians(90+self.angle))/2.0)
-        p.append(self.origin[1] + self.height*math.sin(math.radians(self.angle))/2.0 - self.width*math.sin(math.radians(90+self.angle))/2.0)
-        
-        p.append(self.origin[0] - self.height*math.cos(math.radians(self.angle))/2.0 - self.width*math.cos(math.radians(90+self.angle))/2.0)
-        p.append(self.origin[1] + self.height*math.sin(math.radians(self.angle))/2.0 + self.width*math.sin(math.radians(90+self.angle))/2.0)
-        
-        p.append(self.origin[0] + self.height*math.cos(math.radians(self.angle))/2.0 - self.width*math.cos(math.radians(90+self.angle))/2.0)
-        p.append(self.origin[1] - self.height*math.sin(math.radians(self.angle))/2.0 + self.width*math.sin(math.radians(90+self.angle))/2.0)
-        
+
+        x_1, y_1 = self.rotate_point(self.origin[0]-self.width/2, self.origin[1]-self.height/2, self.origin[0], self.origin[1], math.radians(self.angle))
+        x_2, y_2 = self.rotate_point(self.origin[0]+self.width/2, self.origin[1]-self.height/2, self.origin[0], self.origin[1], math.radians(self.angle))
+        x_3, y_3 = self.rotate_point(self.origin[0]+self.width/2, self.origin[1]+self.height/2, self.origin[0], self.origin[1], math.radians(self.angle))
+        x_4, y_4 = self.rotate_point(self.origin[0]-self.width/2, self.origin[1]+self.height/2, self.origin[0], self.origin[1], math.radians(self.angle))
+
+        p = [x_1, y_1, x_2, y_2, x_3, y_3, x_4, y_4]
+           
         # Make sure that all vertices are inside the canvas area
         if (all([ (p[i]>0 and p[i]<canvas_width) for i in range(0,8,2) ]) and all([ (p[i]>0 and p[i]<canvas_height) for i in range(1,8,2) ])):
             self.addPoint(QPointF(p[0], p[1]))
