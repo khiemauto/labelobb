@@ -11,20 +11,9 @@ import subprocess
 from functools import partial
 from collections import defaultdict
 
-try:
-    from PyQt5.QtGui import *
-    from PyQt5.QtCore import *
-    from PyQt5.QtWidgets import *
-except ImportError:
-    # needed for py3+qt4
-    # Ref:
-    # http://pyqt.sourceforge.net/Docs/PyQt4/incompatible_apis.html
-    # http://stackoverflow.com/questions/21217399/pyqt4-qtcore-qvariant-object-instead-of-a-string
-    if sys.version_info.major >= 3:
-        import sip
-        sip.setapi('QVariant', 2)
-    from PyQt4.QtGui import *
-    from PyQt4.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
 
 import resources
 # Add internal libs
@@ -32,7 +21,7 @@ from libs.constants import *
 from libs.lib import struct, newAction, newIcon, addActions, fmtShortcut, generateColorByText
 from libs.settings import Settings
 from libs.shape import Shape, DEFAULT_LINE_COLOR, DEFAULT_FILL_COLOR
-from libs.stringBundle import StringBundle
+# from libs.stringBundle import StringBundle
 from libs.canvas import Canvas
 from libs.zoomWidget import ZoomWidget
 from libs.labelDialog import LabelDialog
@@ -92,8 +81,8 @@ class MainWindow(QMainWindow, WindowMixin):
         settings = self.settings
 
         # Load string bundle for i18n
-        self.stringBundle = StringBundle.getBundle()
-        getStr = lambda strId: self.stringBundle.getString(strId)
+        # self.stringBundle = StringBundle.getBundle()
+        # getStr = lambda strId: self.stringBundle.getString(strId)
 
         # Save as Pascal voc xml
         self.defaultSaveDir = defaultSaveDir
@@ -129,7 +118,7 @@ class MainWindow(QMainWindow, WindowMixin):
         listLayout.setContentsMargins(0, 0, 0, 0)
 
         # Create a widget for using default label
-        self.useDefaultLabelCheckbox = QCheckBox(getStr('useDefaultLabel'))
+        self.useDefaultLabelCheckbox = QCheckBox('Use default label')
         self.useDefaultLabelCheckbox.setChecked(False)
         self.defaultLabelTextLine = QLineEdit()
         useDefaultLabelQHBoxLayout = QHBoxLayout()
@@ -139,7 +128,7 @@ class MainWindow(QMainWindow, WindowMixin):
         useDefaultLabelContainer.setLayout(useDefaultLabelQHBoxLayout)
 
         # Create a widget for edit and diffc button
-        self.diffcButton = QCheckBox(getStr('useDifficult'))
+        self.diffcButton = QCheckBox('difficult')
         self.diffcButton.setChecked(False)
         self.diffcButton.stateChanged.connect(self.btnstate)
         self.editButton = QToolButton()
@@ -161,8 +150,8 @@ class MainWindow(QMainWindow, WindowMixin):
         self.labelList.itemChanged.connect(self.labelItemChanged)
         listLayout.addWidget(self.labelList)
 
-        self.dock = QDockWidget(getStr('boxLabelText'), self)
-        self.dock.setObjectName(getStr('labels'))
+        self.dock = QDockWidget('Box Labels', self)
+        self.dock.setObjectName('labels')
         self.dock.setWidget(labelListContainer)
 
         self.fileListWidget = QListWidget()
@@ -172,8 +161,8 @@ class MainWindow(QMainWindow, WindowMixin):
         filelistLayout.addWidget(self.fileListWidget)
         fileListContainer = QWidget()
         fileListContainer.setLayout(filelistLayout)
-        self.filedock = QDockWidget(getStr('fileList'), self)
-        self.filedock.setObjectName(getStr('files'))
+        self.filedock = QDockWidget('File List', self)
+        self.filedock.setObjectName('Files')
         self.filedock.setWidget(fileListContainer)
 
         self.zoomWidget = ZoomWidget()
@@ -208,73 +197,73 @@ class MainWindow(QMainWindow, WindowMixin):
 
         # Actions
         action = partial(newAction, self)
-        quit = action(getStr('quit'), self.close,
-                      'Ctrl+Q', 'quit', getStr('quitApp'))
+        quit = action('Quit', self.close,
+                      'Ctrl+Q', 'quit', 'Quit application')
 
-        open = action(getStr('openFile'), self.openFile,
-                      'Ctrl+O', 'open', getStr('openFileDetail'))
+        open = action('Open', self.openFile,
+                      'Ctrl+O', 'open', 'Open image or label file')
 
-        opendir = action(getStr('openDir'), self.openDirDialog,
-                         'Ctrl+u', 'open', getStr('openDir'))
+        opendir = action('Open Dir', self.openDirDialog,
+                         'Ctrl+u', 'open', 'Open Dir')
 
-        changeSavedir = action(getStr('changeSaveDir'), self.changeSavedirDialog,
-                               'Ctrl+r', 'open', getStr('changeSavedAnnotationDir'))
+        changeSavedir = action('Change Save Dir', self.changeSavedirDialog,
+                               'Ctrl+r', 'open', 'Change default saved Annotation dir')
 
-        openAnnotation = action(getStr('openAnnotation'), self.openAnnotationDialog,
-                                'Ctrl+Shift+O', 'open', getStr('openAnnotationDetail'))
+        openAnnotation = action('Open Annotation', self.openAnnotationDialog,
+                                'Ctrl+Shift+O', 'open', 'Open an annotation file')
 
-        openNextImg = action(getStr('nextImg'), self.openNextImg,
-                             'd', 'next', getStr('nextImgDetail'))
+        openNextImg = action('Next Image', self.openNextImg,
+                             'd', 'next', 'Open the next Image')
 
-        openPrevImg = action(getStr('prevImg'), self.openPrevImg,
-                             'a', 'prev', getStr('prevImgDetail'))
+        openPrevImg = action('Prev Image', self.openPrevImg,
+                             'a', 'prev', 'Open the previous Image')
 
-        verify = action(getStr('verifyImg'), self.verifyImg,
-                        'space', 'verify', getStr('verifyImgDetail'))
+        verify = action('Verify Image', self.verifyImg,
+                        'space', 'verify', 'Verify Image')
 
-        save = action(getStr('save'), self.saveFile,
-                      'Ctrl+S', 'save', getStr('saveDetail'), enabled=False)
+        save = action('Save', self.saveFile,
+                      'Ctrl+S', 'save', 'Save the labels to a file', enabled=False)
 
         save_format = action('&YOLO_OBB', self.change_format,
-                      'Ctrl+', 'format_yolo_obb', getStr('changeSaveFormat'), enabled=True)
+                      'Ctrl+', 'format_yolo_obb', 'Change save format', enabled=True)
 
-        saveAs = action(getStr('saveAs'), self.saveFileAs,
-                        'Ctrl+Shift+S', 'save-as', getStr('saveAsDetail'), enabled=False)
+        saveAs = action('Save As', self.saveFileAs,
+                        'Ctrl+Shift+S', 'save-as', 'Save the labels to a different file', enabled=False)
 
-        close = action(getStr('closeCur'), self.closeFile, 'Ctrl+W', 'close', getStr('closeCurDetail'))
+        close = action('Close', self.closeFile, 'Ctrl+W', 'close', 'Close the current file')
 
-        resetAll = action(getStr('resetAll'), self.resetAll, None, 'resetall', getStr('resetAllDetail'))
+        resetAll = action('Reset All', self.resetAll, None, 'resetall', 'Reset All')
 
-        color1 = action(getStr('boxLineColor'), self.chooseColor1,
-                        'Ctrl+L', 'color_line', getStr('boxLineColorDetail'))
+        color1 = action('Box Line Color', self.chooseColor1,
+                        'Ctrl+L', 'color_line', 'Choose Box line color')
 
-        createMode = action(getStr('crtBox'), self.setCreateMode,
-                            'w', 'new', getStr('crtBoxDetail'), enabled=False)
+        createMode = action('Create OreientedRectBox', self.setCreateMode,
+                            'w', 'new', 'Draw a new box', enabled=False)
         editMode = action('&Edit\nRectBox', self.setEditMode,
                           'Ctrl+J', 'edit', u'Move and edit Boxs', enabled=False)
 
-        create = action(getStr('crtBox'), self.createShape,
-                        'w', 'new', getStr('crtBoxDetail'), enabled=False)
-        delete = action(getStr('delBox'), self.deleteSelectedShape,
-                        'Delete', 'delete', getStr('delBoxDetail'), enabled=False)
-        copy = action(getStr('dupBox'), self.copySelectedShape,
-                      'Ctrl+D', 'copy', getStr('dupBoxDetail'),
+        create = action('Create OreientedRectBox', self.createShape,
+                        'w', 'new', 'Draw a new box', enabled=False)
+        delete = action('Delete OreientedRectBox', self.deleteSelectedShape,
+                        'Delete', 'delete', 'Remove the box', enabled=False)
+        copy = action('Duplicate OreientedRectBox', self.copySelectedShape,
+                      'Ctrl+D', 'copy', 'Create a duplicate of the selected box',
                       enabled=False)
 
-        advancedMode = action(getStr('advancedMode'), self.toggleAdvancedMode,
-                              'Ctrl+Shift+A', 'expert', getStr('advancedModeDetail'),
+        advancedMode = action('Advanced Mode', self.toggleAdvancedMode,
+                              'Ctrl+Shift+A', 'expert', 'Swtich to advanced mode',
                               checkable=True)
 
         hideAll = action('&Hide\nRectBox', partial(self.togglePolygons, False),
-                         'Ctrl+H', 'hide', getStr('hideAllBoxDetail'),
+                         'Ctrl+H', 'hide', 'Hide all bounding boxes',
                          enabled=False)
         showAll = action('&Show\nRectBox', partial(self.togglePolygons, True),
-                         'Ctrl+A', 'hide', getStr('showAllBoxDetail'),
+                         'Ctrl+A', 'hide', 'Show all bounding boxes',
                          enabled=False)
 
-        showQuickInstr = action(getStr('quickinstr'), self.showQuickInstrDialog, None, 'help', getStr('quickinstr'))
-        help = action(getStr('tutorial'), self.showTutorialDialog, None, 'help', getStr('tutorialDetail'))
-        showInfo = action(getStr('info'), self.showInfoDialog, None, 'help', getStr('info'))
+        showQuickInstr = action('Quick Instructions', self.showQuickInstrDialog, None, 'help', 'Quick Instructions')
+        help = action('Tutorial', self.showTutorialDialog, None, 'help', 'Show demo')
+        showInfo = action('Information', self.showInfoDialog, None, 'help', 'Information')
 
         zoom = QWidgetAction(self)
         zoom.setDefaultWidget(self.zoomWidget)
@@ -284,17 +273,17 @@ class MainWindow(QMainWindow, WindowMixin):
                                              fmtShortcut("Ctrl+Wheel")))
         self.zoomWidget.setEnabled(False)
 
-        zoomIn = action(getStr('zoomin'), partial(self.addZoom, 10),
-                        'Ctrl++', 'zoom-in', getStr('zoominDetail'), enabled=False)
-        zoomOut = action(getStr('zoomout'), partial(self.addZoom, -10),
-                         'Ctrl+-', 'zoom-out', getStr('zoomoutDetail'), enabled=False)
-        zoomOrg = action(getStr('originalsize'), partial(self.setZoom, 100),
-                         'Ctrl+=', 'zoom', getStr('originalsizeDetail'), enabled=False)
-        fitWindow = action(getStr('fitWin'), self.setFitWindow,
-                           'Ctrl+F', 'fit-window', getStr('fitWinDetail'),
+        zoomIn = action('Zoom In', partial(self.addZoom, 10),
+                        'Ctrl++', 'zoom-in', 'Increase zoom level', enabled=False)
+        zoomOut = action('Zoom Out', partial(self.addZoom, -10),
+                         'Ctrl+-', 'zoom-out', 'Decrease zoom level', enabled=False)
+        zoomOrg = action('Original size', partial(self.setZoom, 100),
+                         'Ctrl+=', 'zoom', 'Zoom to original size', enabled=False)
+        fitWindow = action('Fit Window', self.setFitWindow,
+                           'Ctrl+F', 'fit-window', 'Zoom follows window size',
                            checkable=True, enabled=False)
-        fitWidth = action(getStr('fitWidth'), self.setFitWidth,
-                          'Ctrl+Shift+F', 'fit-width', getStr('fitWidthDetail'),
+        fitWidth = action('Fit Widith', self.setFitWidth,
+                          'Ctrl+Shift+F', 'fit-width', 'Zoom follows window width',
                           checkable=True, enabled=False)
         # Group zoom controls into a list for easier toggling.
         zoomActions = (self.zoomWidget, zoomIn, zoomOut,
@@ -307,20 +296,20 @@ class MainWindow(QMainWindow, WindowMixin):
             self.MANUAL_ZOOM: lambda: 1,
         }
 
-        edit = action(getStr('editLabel'), self.editLabel,
-                      'Ctrl+E', 'edit', getStr('editLabelDetail'),
+        edit = action('Edit Label', self.editLabel,
+                      'Ctrl+E', 'edit', 'Modify the label of the selected Box',
                       enabled=False)
         self.editButton.setDefaultAction(edit)
 
-        shapeLineColor = action(getStr('shapeLineColor'), self.chshapeLineColor,
-                                icon='color_line', tip=getStr('shapeLineColorDetail'),
+        shapeLineColor = action('Shape Line Color', self.chshapeLineColor,
+                                icon='color_line', tip='Change the line color for this specific shape',
                                 enabled=False)
-        shapeFillColor = action(getStr('shapeFillColor'), self.chshapeFillColor,
-                                icon='color', tip=getStr('shapeFillColorDetail'),
+        shapeFillColor = action('Shape Fill Color', self.chshapeFillColor,
+                                icon='color', tip='Change the fill color for this specific shape',
                                 enabled=False)
 
         labels = self.dock.toggleViewAction()
-        labels.setText(getStr('showHide'))
+        labels.setText('Show/Hide Label Panel')
         labels.setShortcut('Ctrl+Shift+L')
 
         # Lavel list context menu.
@@ -366,17 +355,17 @@ class MainWindow(QMainWindow, WindowMixin):
             labelList=labelMenu)
 
         # Auto saving : Enable auto saving if pressing next
-        self.autoSaving = QAction(getStr('autoSaveMode'), self)
+        self.autoSaving = QAction('Auto Save mode', self)
         self.autoSaving.setCheckable(True)
         self.autoSaving.setChecked(settings.get(SETTING_AUTO_SAVE, False))
         # Sync single class mode from PR#106
-        self.singleClassMode = QAction(getStr('singleClsMode'), self)
+        self.singleClassMode = QAction('Single Class Mode', self)
         self.singleClassMode.setShortcut("Ctrl+Shift+S")
         self.singleClassMode.setCheckable(True)
         self.singleClassMode.setChecked(settings.get(SETTING_SINGLE_CLASS, False))
         self.lastLabel = None
         # Add option to enable/disable labels being displayed at the top of bounding boxes
-        self.displayLabelOption = QAction(getStr('displayLabel'), self)
+        self.displayLabelOption = QAction('Display Labels', self)
         self.displayLabelOption.setShortcut("Ctrl+Shift+P")
         self.displayLabelOption.setCheckable(True)
         self.displayLabelOption.setChecked(settings.get(SETTING_PAINT_LABEL, False))

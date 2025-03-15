@@ -1,0 +1,1 @@
+pyinstaller --onefile --windowed --name labelImg --icon=resources\icons\app.png --add-data "resources;resources" --add-data "libs;libs" --hidden-import numpy --hidden-import turtledemo labelImg.py

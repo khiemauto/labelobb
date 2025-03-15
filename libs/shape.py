@@ -4,15 +4,13 @@
 import math
 import numpy as np
 
-from turtledemo import paint
-from audioop import minmax
+# from turtledemo import paint
+# from audioop import minmax
 
-try:
-    from PyQt5.QtGui import *
-    from PyQt5.QtCore import *
-except ImportError:
-    from PyQt4.QtGui import *
-    from PyQt4.QtCore import *
+
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+
 
 from libs.lib import distance
 import sys
