@@ -9,7 +9,10 @@ from PyQt5.QtWidgets import *
 
 
 def newIcon(icon):
-    qicon = QIcon('resources\\icons\\' + icon + '.png')
+    # if os.path.exists('resources\\icons\\' + icon + '.png'):
+    #     qicon = QIcon('resources\\icons\\' + icon + '.png')
+    # else:
+    qicon = QIcon(f":/{icon}")
     return qicon
 
 

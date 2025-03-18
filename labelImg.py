@@ -1,21 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import codecs
-import distutils.spawn
 import os.path
 import platform
-import re
 import sys
 import subprocess
 
 from functools import partial
-from collections import defaultdict
 
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
-import resources
+import resources_rc
 # Add internal libs
 from libs.constants import *
 from libs.lib import struct, newAction, newIcon, addActions, fmtShortcut, generateColorByText
@@ -28,9 +25,6 @@ from libs.labelDialog import LabelDialog
 from libs.colorDialog import ColorDialog
 from libs.labelFile import LabelFile, LabelFileError
 from libs.toolBar import ToolBar
-from libs.pascal_voc_io import PascalVocReader
-from libs.pascal_voc_io import XML_EXT
-from libs.yolo_io import YoloReader
 from libs.yolo_obb_io import YoloOBBReader
 from libs.yolo_obb_io import JSON_EXT
 from libs.ustr import ustr
@@ -86,9 +80,6 @@ class MainWindow(QMainWindow, WindowMixin):
 
         # Save as Pascal voc xml
         self.defaultSaveDir = defaultSaveDir
-        self.usingPascalVocFormat = False
-        self.usingYoloFormat = False
-        self.usingYoloOBBFormat = True # Default Format
 
         # For loading all image under a directory
         self.mImgList = []
@@ -224,8 +215,8 @@ class MainWindow(QMainWindow, WindowMixin):
         save = action('Save', self.saveFile,
                       'Ctrl+S', 'save', 'Save the labels to a file', enabled=False)
 
-        save_format = action('&YOLO_OBB', self.change_format,
-                      'Ctrl+', 'format_yolo_obb', 'Change save format', enabled=True)
+        # save_format = action('&YOLO_OBB', self.change_format,
+        #               'Ctrl+', 'format_yolo_obb', 'Change save format', enabled=True)
 
         saveAs = action('Save As', self.saveFileAs,
                         'Ctrl+Shift+S', 'save-as', 'Save the labels to a different file', enabled=False)
@@ -237,16 +228,16 @@ class MainWindow(QMainWindow, WindowMixin):
         color1 = action('Box Line Color', self.chooseColor1,
                         'Ctrl+L', 'color_line', 'Choose Box line color')
 
-        createMode = action('Create OreientedRectBox', self.setCreateMode,
+        createMode = action('Create OBB', self.setCreateMode,
                             'w', 'new', 'Draw a new box', enabled=False)
         editMode = action('&Edit\nRectBox', self.setEditMode,
                           'Ctrl+J', 'edit', u'Move and edit Boxs', enabled=False)
 
-        create = action('Create OreientedRectBox', self.createShape,
+        create = action('Create OBB', self.createShape,
                         'w', 'new', 'Draw a new box', enabled=False)
-        delete = action('Delete OreientedRectBox', self.deleteSelectedShape,
+        delete = action('Delete OBB', self.deleteSelectedShape,
                         'Delete', 'delete', 'Remove the box', enabled=False)
-        copy = action('Duplicate OreientedRectBox', self.copySelectedShape,
+        copy = action('Duplicate OBB', self.copySelectedShape,
                       'Ctrl+D', 'copy', 'Create a duplicate of the selected box',
                       enabled=False)
 
@@ -327,7 +318,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.drawSquaresOption.triggered.connect(self.toogleDrawSquare)
 
         # Store actions for further handling.
-        self.actions = struct(save=save, save_format=save_format, saveAs=saveAs, open=open, close=close, resetAll = resetAll,
+        self.actions = struct(save=save, saveAs=saveAs, open=open, close=close, resetAll = resetAll,
                               lineColor=color1, create=create, delete=delete, edit=edit, copy=copy,
                               createMode=createMode, editMode=editMode, advancedMode=advancedMode,
                               shapeLineColor=shapeLineColor, shapeFillColor=shapeFillColor,
@@ -372,7 +363,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.displayLabelOption.triggered.connect(self.togglePaintLabelsOption)
 
         addActions(self.menus.file,
-                   (open, opendir, changeSavedir, openAnnotation, self.menus.recentFiles, save, save_format, saveAs, close, resetAll, quit))
+                   (open, opendir, changeSavedir, openAnnotation, self.menus.recentFiles, save, saveAs, close, resetAll, quit))
         addActions(self.menus.help, (showQuickInstr, help, showInfo))
         addActions(self.menus.view, (
             self.autoSaving,
@@ -393,11 +384,11 @@ class MainWindow(QMainWindow, WindowMixin):
 
         self.tools = self.toolbar('Tools')
         self.actions.beginner = (
-            open, opendir, changeSavedir, openNextImg, openPrevImg, verify, save, save_format, None, create, copy, delete, None,
+            open, opendir, changeSavedir, openNextImg, openPrevImg, verify, save, None, create, copy, delete, None,
             zoomIn, zoom, zoomOut, fitWindow, fitWidth)
 
         self.actions.advanced = (
-            open, opendir, changeSavedir, openNextImg, openPrevImg, save, save_format, None,
+            open, opendir, changeSavedir, openNextImg, openPrevImg, save, None,
             createMode, editMode, None,
             hideAll, showAll)
 
@@ -490,38 +481,6 @@ class MainWindow(QMainWindow, WindowMixin):
             self.canvas.setDrawingShapeToSquare(True)
 
     ## Support Functions ##
-    def set_format(self, save_format):
-        '''
-        if save_format == FORMAT_PASCALVOC:
-            self.actions.save_format.setText(FORMAT_PASCALVOC)
-            self.actions.save_format.setIcon(newIcon("format_voc"))
-            self.usingPascalVocFormat = False
-            self.usingYoloFormat = False
-            self.usingYoloOBBFormat = True
-            LabelFile.suffix = XML_EXT
-
-        elif save_format == FORMAT_YOLO:
-            self.actions.save_format.setText(FORMAT_YOLO)
-            self.actions.save_format.setIcon(newIcon("format_yolo"))
-            self.usingPascalVocFormat = False
-            self.usingYoloFormat = False
-            self.usingYoloOBBFormat = True
-            LabelFile.suffix = JSON_EXT
-            
-        elif save_format == FORMAT_YOLO_OBB:'''
-        
-        self.actions.save_format.setText(FORMAT_YOLO_OBB)
-        self.actions.save_format.setIcon(newIcon("format_yolo_obb"))
-        self.usingPascalVocFormat = False
-        self.usingYoloFormat = False
-        self.usingYoloOBBFormat = True
-        LabelFile.suffix = JSON_EXT
-
-    def change_format(self):
-        if self.usingPascalVocFormat: self.set_format(FORMAT_YOLO)
-        elif self.usingYoloFormat: self.set_format(FORMAT_YOLO_OBB)
-        elif self.usingYoloOBBFormat: self.set_format(FORMAT_PASCALVOC)
-
     def noShapes(self):
         return not self.itemsToShapes
 
@@ -854,25 +813,12 @@ class MainWindow(QMainWindow, WindowMixin):
         shapes = [format_shape(shape) for shape in self.canvas.shapes]
         # Can add differrent annotation formats here
         try:
-            if self.usingPascalVocFormat is True:
-                if annotationFilePath[-4:].lower() != ".xml":
-                    annotationFilePath += XML_EXT
-                self.labelFile.savePascalVocFormat(annotationFilePath, shapes, self.filePath, self.imageData,
-                                                   self.lineColor.getRgb(), self.fillColor.getRgb())
-            elif self.usingYoloFormat is True:
-                if annotationFilePath[-4:].lower() != ".json":
-                    annotationFilePath += JSON_EXT
-                self.labelFile.saveYoloFormat(annotationFilePath, shapes, self.filePath, self.imageData, self.labelHist,
-                                                   self.lineColor.getRgb(), self.fillColor.getRgb())
-            elif self.usingYoloOBBFormat is True:
-                shapes = [format_obb_shape(shape) for shape in self.canvas.shapes]
-                if annotationFilePath[-4:].lower() != ".json":
-                    annotationFilePath += JSON_EXT
-                self.labelFile.saveYoloOBBFormat(annotationFilePath, shapes, self.filePath, self.imageData, self.labelHist,
-                                                   self.lineColor.getRgb(), self.fillColor.getRgb())
-            else:
-                self.labelFile.save(annotationFilePath, shapes, self.filePath, self.imageData,
-                                    self.lineColor.getRgb(), self.fillColor.getRgb())
+           
+            shapes = [format_obb_shape(shape) for shape in self.canvas.shapes]
+            if annotationFilePath[-4:].lower() != ".json":
+                annotationFilePath += JSON_EXT
+            self.labelFile.saveYoloOBBFormat(annotationFilePath, shapes, self.filePath, self.imageData, self.labelHist,
+                                            self.lineColor.getRgb(), self.fillColor.getRgb())
             print('Image:{0} -> Annotation:{1}'.format(self.filePath, annotationFilePath))
             return True
         except LabelFileError as e:
@@ -1079,7 +1025,7 @@ class MainWindow(QMainWindow, WindowMixin):
                 self.loadLabels(self.labelFile.shapes)
             self.setClean()
             self.canvas.setEnabled(True)
-            self.adjustScale(initial=True)
+            # self.adjustScale(initial=True)
             self.paintCanvas()
             self.addRecentFile(self.filePath)
             self.toggleActions(True)
@@ -1089,23 +1035,11 @@ class MainWindow(QMainWindow, WindowMixin):
             if self.defaultSaveDir is not None:
                 basename = os.path.basename(
                     os.path.splitext(self.filePath)[0])
-                xmlPath = os.path.join(self.defaultSaveDir, basename + XML_EXT)
                 jsonPath = os.path.join(self.defaultSaveDir, basename + JSON_EXT)
-
-                """Annotation file priority:
-                PascalXML > YOLO_OBB > YOLO
-                """
-                if os.path.isfile(xmlPath):
-                    self.loadPascalXMLByFilename(xmlPath)
-                elif os.path.isfile(jsonPath):
-                    self.loadYOLOTOBBJSONByFilename(jsonPath)
+                self.loadYOLOTOBBJSONByFilename(jsonPath)
             else:
-                xmlPath = os.path.splitext(filePath)[0] + XML_EXT
                 jsonPath = os.path.splitext(filePath)[0] + JSON_EXT
-                if os.path.isfile(xmlPath):
-                    self.loadPascalXMLByFilename(xmlPath)
-                elif os.path.isfile(jsonPath):
-                    self.loadYOLOTOBBJSONByFilename(jsonPath)
+                self.loadYOLOTOBBJSONByFilename(jsonPath)
 
             self.setWindowTitle(__appname__ + ' ' + filePath)
 
@@ -1501,7 +1435,6 @@ class MainWindow(QMainWindow, WindowMixin):
         if os.path.isfile(txtPath) is False:
             return
 
-        self.set_format(FORMAT_YOLO_OBB)
         tYoloOBBParseReader = YoloOBBReader(txtPath, self.image)
         shapes = tYoloOBBParseReader.getShapes()
         print (shapes)

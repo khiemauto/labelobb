@@ -51,16 +51,6 @@ Linux/Ubuntu/Mac requires at least `Python
 
 Ubuntu Linux
 ^^^^^^^^^^^^
-Python 2 + Qt4
-
-.. code::
-
-    sudo apt-get install pyqt4-dev-tools
-    sudo pip install lxml
-    make qt4py2
-    python labelImg.py
-    python labelImg.py [IMAGE_PATH] [PRE-DEFINED CLASS FILE]
-
 Python 3 + Qt5
 
 .. code::
@@ -73,16 +63,6 @@ Python 3 + Qt5
 
 macOS
 ^^^^
-Python 2 + Qt4
-
-.. code::
-
-    brew install qt qt4
-    brew install libxml2
-    make qt4py2
-    python labelImg.py
-    python labelImg.py [IMAGE_PATH] [PRE-DEFINED CLASS FILE]
-
 Python 3 + Qt5 (Works on macOS High Sierra)
 
 .. code::
@@ -118,6 +98,8 @@ in your /Applications folder. You can consider this script: build-tools/build-fo
 
 Windows
 ^^^^^^^
+.. code::
+    pyinstaller labelImg.spec
 
 Download and setup `Python 2.6 or
 later <https://www.python.org/downloads/windows/>`__,

@@ -1,12 +1,12 @@
 # -*- mode: python ; coding: utf-8 -*-
-
+from PyInstaller.utils.win32.versioninfo import VSVersionInfo, FixedFileInfo, StringFileInfo, StringTable, StringStruct, VarFileInfo, VarStruct
 
 a = Analysis(
     ['labelImg.py'],
     pathex=[],
     binaries=[],
-    datas=[('resources', 'resources'), ('libs', 'libs')],
-    hiddenimports=['numpy', 'turtledemo', 'xml.etree.ElementTree', 'lxml'],
+    datas=[('libs', 'libs'), ('resources_rc.py', '.')],
+    hiddenimports=['PyQt5'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -15,6 +15,39 @@ a = Analysis(
     optimize=0,
 )
 pyz = PYZ(a.pure)
+
+version = VSVersionInfo(
+    ffi=FixedFileInfo(
+        filevers=(1, 0, 0, 0),
+        prodvers=(1, 0, 0, 0),
+        mask=0x3f,
+        flags=0x0,
+        OS=0x4,
+        fileType=0x1,
+        subtype=0x0,
+        date=(0, 0)
+    ),
+    kids=[
+        StringFileInfo(
+            [
+                StringTable(
+                    u'040904B0',
+                    [
+                        StringStruct(u'CompanyName', u'Khiem Tran'),
+                        StringStruct(u'FileDescription', u'LabelImg Application'),
+                        StringStruct(u'FileVersion', u'1.0.0.0'),
+                        StringStruct(u'InternalName', u'labelImg'),
+                        StringStruct(u'LegalCopyright', u'Copyright (C) 2025 Khiem Tran'),
+                        StringStruct(u'OriginalFilename', u'labelImg.exe'),
+                        StringStruct(u'ProductName', u'LabelImg'),
+                        StringStruct(u'ProductVersion', u'1.0.0.0')
+                    ]
+                )
+            ]
+        ),
+        VarFileInfo([VarStruct(u'Translation', [1033, 1200])])
+    ]
+)
 
 exe = EXE(
     pyz,
@@ -36,4 +69,5 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     icon=['resources\\icons\\app.png'],
+    version=version
 )
