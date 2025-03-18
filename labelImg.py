@@ -68,7 +68,7 @@ class MainWindow(QMainWindow, WindowMixin):
     def __init__(self, defaultFilename=None, defaultPrefdefClassFile=None, defaultSaveDir=None):
         super(MainWindow, self).__init__()
         self.setWindowTitle(__appname__)
-
+        self.setDarkMode()
         # Load setting in the main thread
         self.settings = Settings()
         self.settings.load()
@@ -471,6 +471,109 @@ class MainWindow(QMainWindow, WindowMixin):
         if self.filePath and os.path.isdir(self.filePath):
             self.openDirDialog(dirpath=self.filePath)
 
+    
+    def setDarkMode(self):
+        dark_palette = QPalette()
+        dark_palette.setColor(QPalette.Window, QColor(53, 53, 53))
+        dark_palette.setColor(QPalette.WindowText, Qt.white)
+        dark_palette.setColor(QPalette.Base, QColor(25, 25, 25))
+        dark_palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
+        dark_palette.setColor(QPalette.ToolTipBase, Qt.white)
+        dark_palette.setColor(QPalette.ToolTipText, Qt.white)
+        dark_palette.setColor(QPalette.Text, Qt.white)
+        dark_palette.setColor(QPalette.Button, QColor(53, 53, 53))
+        dark_palette.setColor(QPalette.ButtonText, Qt.white)
+        dark_palette.setColor(QPalette.BrightText, Qt.red)
+        dark_palette.setColor(QPalette.Link, QColor(42, 130, 218))
+        dark_palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
+        dark_palette.setColor(QPalette.HighlightedText, Qt.black)
+        QApplication.setPalette(dark_palette)
+
+        # Thêm stylesheet để đồng bộ màu sắc
+        self.setStyleSheet("""
+            QLineEdit, QTextEdit, QPlainTextEdit, QSpinBox, QComboBox, QGroupBox {
+                background-color: #353535;
+                color: white;
+            }
+            QToolTip {
+                background-color: #2b2b2b;
+                color: white;
+            }
+            QMessageBox {
+                background-color: #353535;
+                color: white;
+            }
+            QPushButton {
+                background-color: #2b2b2b;
+                color: white;
+            }
+            QPushButton:hover {
+                background-color: #3c3c3c;
+            }
+            QMenuBar {
+                background-color: #2b2b2b;
+                color: white;
+            }
+            QMenu {
+                background-color: #2b2b2b;
+                color: white;
+            }
+            QMenu::item:selected {
+                background-color: #3c3c3c;
+            }
+            QScrollBar:vertical, QScrollBar:horizontal {
+                background-color: #2b2b2b;
+            }
+            QScrollBar::handle {
+                background-color: #555;
+            }
+            QScrollBar::handle:hover {
+                background-color: #666;
+            }
+            QScrollBar::add-line, QScrollBar::sub-line {
+                background-color: #2b2b2b;
+            }
+            QTabWidget::pane {
+                background-color: #2b2b2b;
+            }
+            QTabBar::tab {
+                background-color: #2b2b2b;
+                color: white;
+                padding: 5px;
+            }
+            QTabBar::tab:selected {
+                background-color: #3c3c3c;
+            }
+            QGroupBox {
+                border: 1px solid #444;
+                margin-top: 10px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                subcontrol-position: top left;
+                padding: 0 3px;
+                color: white;
+            }
+            QListWidget, QTreeWidget {
+                background-color: #353535;
+                color: white;
+            }
+            QHeaderView::section {
+                background-color: #2b2b2b;
+                color: white;
+            }
+            QToolButton {
+                background-color: #2b2b2b;
+                color: white;
+            }
+            QToolButton:hover {
+                background-color: #3c3c3c;
+            }
+            QToolButton:pressed {
+                background-color: #444;
+            }
+        """)
+
     def keyReleaseEvent(self, event):
         if event.key() == Qt.Key_Control:
             self.canvas.setDrawingShapeToSquare(False)
@@ -588,7 +691,7 @@ class MainWindow(QMainWindow, WindowMixin):
         subprocess.Popen(self.screencastViewer + [self.screencast])
 
     def showInfoDialog(self):
-        msg = u'Name:{0} \nApp Version:{1} \n{2} '.format(__appname__, __version__, sys.version_info)
+        msg = u'Name:{0} \nApp Version:{1}'.format(__appname__, __version__)
         QMessageBox.information(self, u'Information', msg)
 
     def createShape(self):
